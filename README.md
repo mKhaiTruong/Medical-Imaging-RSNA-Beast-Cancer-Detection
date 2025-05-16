@@ -36,7 +36,7 @@ Includes mammography images in `.dcm` (DICOM) and `.jp2` (JPEG2000) formats.
 
 ---
 
-## 🚧 Future Work
+## ⭐ Future Work
 
 - 💡 **Data Augmentation with GANs:** To address class imbalance by generating synthetic samples.
 - 🤔 **Diffusion Models:** Considered, but converting `.dcm` to `.png` may cause loss of quality, especially when moving away from `.jp2` benefits.
@@ -55,3 +55,14 @@ Includes mammography images in `.dcm` (DICOM) and `.jp2` (JPEG2000) formats.
 - [ ] Benchmark `.jp2` directly vs `.png`
 - [ ] Integrate GANs or VAEs for minority class synthesis
 - [ ] Try training with CLIP embeddings or other multimodal setups
+
+---
+---
+
+## 🚧 Here lies updated codes
+
+1. V1:
+- lower augmentations' intensity. Some strong augmentations can lead to bad predictions.
+- cleaner RSNADataset.
+- EffNetV2, an upgrade from the original EffNet model in both performance and efficiency.
+- In training function: Try different params + Try ensembling: The ensembling function "ensemble_predict(models, test_data, voting_type='soft')" takes multiple trained models (like the top 3 saved from each fold) and combines their predictions on the same test data.
