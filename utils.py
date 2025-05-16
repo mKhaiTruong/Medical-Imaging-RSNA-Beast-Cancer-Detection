@@ -4,6 +4,7 @@ import io
 import os
 import gc
 import cv2
+import math
 import time
 import random
 import pydicom
@@ -67,6 +68,7 @@ from albumentations.pytorch import ToTensorV2
 from transformers import ViTModel, ViTFeatureExtractor, ViTForImageClassification
 
 ## Torch
+import timm
 import torch
 import torchvision
 import torch.nn as nn
@@ -165,54 +167,100 @@ def create_wandb_hist(x_data = None, x_name = None, title = None, log = None):
     table = wandb.Table(data = data, columns=[x_name])
     wandb.log({ log: wandb.plot.histogram(table, x_name, title=title) })
     
+
+def show_stacked_images(image_tensor_batch, target_labels=None):
     
+    num_images = image_tensor_batch.size(0)
+    sqrt_n = int(math.sqrt(num_images))
+    ncols = sqrt_n
+    nrows = math.ceil(num_images / ncols)
+    fig, axis = plt.subplots(
+        nrows=nrows, ncols=ncols, figsize=(12 * ncols, 8 * nrows)
+    )
+    axis = axis.flatten()
+    
+    for i in range(num_images):
+        image_tensor = image_tensor_batch[i]
+        image = image_tensor.cpu().numpy().transpose((1, 2, 0))     # Transpose to HWC
+        
+        mean = np.array([0.485, 0.456, 0.406])
+        std = np.array([0.229, 0.224, 0.225])
+    
+        image = std * image + mean                                  # Unnormalize
+        image = np.clip(image, 0, 1)
+        
+         # Convert RGB to grayscale
+        image_gray = cv2.cvtColor((image * 255).astype(np.uint8), cv2.COLOR_RGB2GRAY)
+        image_gray = image_gray / 255.0
+        
+        axis[i].imshow(image_gray, cmap="bone")
+        axis[i].axis('off')
+        if target_labels is not None:
+            axis[i].set_title(f"Target: {target_labels[i].item()}")
+    
+    plt.tight_layout()
+    plt.axis('off')
+    plt.show()
+
     
 # ================================= AUGMENTATION =========================================
-def transforms(isTrain = False):
+def transforms(isTrain=False, isMinority=False):
     aug_list = []
+    SIZE = 224
+    
+    # === Spatial: Isotropic Scaling ===
+    # For handling different size images
+    aug_list += [
+        A.LongestMaxSize(max_size=SIZE, p=1),
+        A.PadIfNeeded(min_height=SIZE, min_width=SIZE, border_mode=cv2.BORDER_CONSTANT, value=0, p=1),  # Padding to make the image size consistent
+    ]
     
     if isTrain:
-        aug_list += [
+        if isMinority:          # Stronger augmentations for the minority class
             
-            # === Spatial: Isotropic Scaling ===
-            A.LongestMaxSize(max_size=224),
-            A.PadIfNeeded(min_height=224, min_width=224, border_mode=cv2.BORDER_CONSTANT, value=0),
+            aug_list += [
+                
+                A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=15, p=0.7),
+                A.ISONoise(color_shift=(0.01, 0.03), intensity=(0.05, 0.15), p=0.2),
+                A.ElasticTransform(alpha=1, sigma=50, alpha_affine=50, p=0.2),
+                A.RandomBrightnessContrast(p=0.2),
+                A.HorizontalFlip(p=0.3),
+                A.VerticalFlip(p=0.3),
+                A.GridDistortion(p=0.3),
+            ]
             
-            # === Photometric Augmentations - Brightness / Contrast / Gamma — very mild ===
-            A.OneOf([
-                A.RandomToneCurve(scale=0.3, p=0.5),
-                A.RandomGamma(gamma_limit=(90, 110), p=0.3),
-                A.RandomBrightnessContrast(brightness_limit=(-0.1, 0.2), contrast_limit=(-0.4, 0.5), p=0.5)
-            ], p=0.5),
+        else:                   # Mild augmentations for the majority class
             
-            # === Mild Contrast Enhancer (safe CLAHE) ===
-            A.CLAHE(clip_limit=2.0, tile_grid_size=(8, 8), p=0.2),
-            
-            # == Downscaling - Blurring (slight only) ==
-            A.OneOf([
-                A.MotionBlur(blur_limit=3, p=0.3),
-                A.Downscale(scale_min=0.9, scale_max=0.95, interpolation=dict(
-                    upscale=cv2.INTER_LINEAR, downscale=cv2.INTER_AREA), p=0.7),
-            ], p=0.2),
-            
-            # === Occlusion-style Augmentation ===
-            A.OneOf([
-                A.GridDropout(ratio=0.2, unit_size_min=16, unit_size_max=32, random_offset=True, p=0.2),
-                A.CoarseDropout(max_holes=6, max_height=0.15, max_width=0.25, min_holes=1, min_height=0.05, min_width=0.1, fill_value=0, mask_fill_value=None, p=0.25),
-            ], p=0.3),
-            
-            # === Flips ===
-            A.HorizontalFlip(p=0.5) if isTrain else A.NoOp(),
-            A.VerticalFlip(p=0.5) if isTrain else A.NoOp(),
-            
-        ]
-    
-    else:
-        # Inference-time: keep only resize + normalize
-        aug_list += [
-            A.LongestMaxSize(max_size=224),
-            A.PadIfNeeded(min_height=224, min_width=224, border_mode=cv2.BORDER_CONSTANT, value=0),
-        ]
+            aug_list += [
+                
+                # === Photometric Augmentations - Brightness / Contrast / Gamma — very mild ===
+                A.OneOf([
+                    A.RandomToneCurve(scale=0.2, p=0.3),
+                    A.RandomGamma(gamma_limit=(90, 110), p=0.2),
+                    A.RandomBrightnessContrast(brightness_limit=(-0.075, 0.075), contrast_limit=(-0.4, 0.5), p=0.3)
+                ], p=0.5),
+                
+                # === Mild Contrast Enhancer (safe CLAHE) ===
+                A.CLAHE(clip_limit=2.0, tile_grid_size=(8, 8), p=0.2),
+                
+                # == Downscaling - Blurring (slight only) ==
+                A.OneOf([   
+                    A.MotionBlur(blur_limit=3, p=0.3),
+                    A.Downscale(scale_min=0.98, scale_max=1, interpolation=dict(
+                        upscale=cv2.INTER_LINEAR, downscale=cv2.INTER_AREA), p=0.5),
+                ], p=0.2),
+                
+                # === Occlusion-style Augmentation ===
+                A.OneOf([
+                    A.GridDropout(ratio=0.2, unit_size_min=16, unit_size_max=32, random_offset=True, p=0.2),
+                    A.CoarseDropout(max_holes=6, max_height=0.15, max_width=0.25, min_holes=1, min_height=0.05, min_width=0.1, fill_value=0, mask_fill_value=None, p=0.25),
+                ], p=0.3),
+                
+                # === Flips ===
+                A.HorizontalFlip(p=0.5) if isTrain else A.NoOp(),
+                A.VerticalFlip(p=0.5) if isTrain else A.NoOp(),
+                
+            ]
     
     # === Normalize & ToTensor ===
     aug_list += [
@@ -232,9 +280,11 @@ class ResNet50Network(nn.Module):
         
         backbone = resnet50(weights=ResNet50_Weights.DEFAULT)
         
-        # output: [B, 2048, 1, 1]
+        # output before modifications: [B, 2048, 7, 7] for a 224x224 input
         # Remove the final classification layer to extract features (2048-dim)
-        self.features = nn.Sequential(*list(backbone.children())[:-1])
+        modules = list(backbone.children())[:-2]
+        modules.append(nn.AdaptiveAvgPool2d(output_size=(1, 1)))
+        self.features = nn.Sequential(*modules)     # output after AvgPool: [B, 2048, 1, 1]
         
         # == metadata ==
         self.csv = nn.Sequential(
@@ -278,7 +328,7 @@ class EffNetNetwork(nn.Module):
         self.no_columns, self.outputSize = no_columns, outputSize
         
         self.features = EfficientNet.from_pretrained('efficientnet-b3')
-        
+    
         self.csv = nn.Sequential(
             nn.Linear(self.no_columns, 250),
             nn.BatchNorm1d(250),
@@ -313,6 +363,59 @@ class EffNetNetwork(nn.Module):
         # == CLASSIF ==
         out = self.classification(image_meta_data)
         if prints: print(f'Out shape: {out.shape}')
+        
+        return out
+
+ 
+# ======================================= EFFNETV2 =============================================
+class EffNetV2Network(nn.Module):
+    
+    def __init__(self, outputSize, no_columns):
+        super().__init__()
+        self.no_columns, self.outputSize = no_columns, outputSize
+        
+        # Load EfficientNetV2 (using correct model name)
+        self.features = torchvision.models.efficientnet_v2_s(weights='IMAGENET1K_V1')
+        self.features = nn.Sequential(*list(self.features.children())[:-1])
+        
+        self.csv = nn.Sequential(
+            nn.Linear(self.no_columns, 250), 
+            nn.BatchNorm1d(250),
+            nn.ReLU(),
+            nn.Dropout(p=0.2),
+            
+            nn.Linear(250, 250),
+            nn.BatchNorm1d(250),
+            nn.ReLU(),
+            nn.Dropout(p=0.2),
+        )
+        
+        self.classification = nn.Sequential(nn.Linear(1280 + 250, self.outputSize))  # 1280 comes from EfficientNetV2-B0 output dimension
+    
+    def forward(self, image, meta, prints=False):
+        if prints: 
+            print(f"Input Image Shape: {image.shape} \n Input Metadata Shape: {meta.shape}")
+        
+        # == Image CNN == (EfficientNetV2 Feature Extraction)
+        image = self.features(image) 
+        image = F.avg_pool2d(image, image.size()[2:]).reshape(-1, 1280)  # 1280 is the output feature size for EfficientNetV2-B0
+        if prints: 
+            print(f'Features image shape: {image.shape}')
+        
+        # == CSV FNN == (Tabular data processing)
+        meta = self.csv(meta)
+        if prints: 
+            print(f'Metadata shape: {meta.shape}')
+        
+        # Concatenate image features with metadata features
+        image_meta_data = torch.cat((image, meta), dim=1)
+        if prints: 
+            print(f'Concatenated data: {image_meta_data.shape}')
+        
+        # == Final Classification ==
+        out = self.classification(image_meta_data)
+        if prints: 
+            print(f'Out shape: {out.shape}')
         
         return out
 

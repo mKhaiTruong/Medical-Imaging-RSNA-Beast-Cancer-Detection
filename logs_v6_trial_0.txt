@@ -1,0 +1,44 @@
+Training with learning rate: 0.00028673439652611405 and batch size: 64
+-------- Fold: 1 --------
+6417.03 | Epoch: 1/20 | Loss: 1469.0160 | Acc_tr: 0.651 | Acc_vd: 0.445 | ROC: 0.968 | F1: 0.067
+6213.43 | Epoch: 2/20 | Loss: 1160.3618 | Acc_tr: 0.718 | Acc_vd: 0.533 | ROC: 0.971 | F1: 0.078
+6359.61 | Epoch: 3/20 | Loss: 1070.7273 | Acc_tr: 0.741 | Acc_vd: 0.484 | ROC: 0.974 | F1: 0.071
+6243.91 | Epoch: 4/20 | Loss: 978.1178 | Acc_tr: 0.755 | Acc_vd: 0.454 | ROC: 0.973 | F1: 0.067
+6316.19 | Epoch: 5/20 | Loss: 873.1560 | Acc_tr: 0.782 | Acc_vd: 0.710 | ROC: 0.967 | F1: 0.116
+6375.31 | Epoch: 6/20 | Loss: 711.5284 | Acc_tr: 0.824 | Acc_vd: 0.767 | ROC: 0.982 | F1: 0.142
+6938.23 | Epoch: 7/20 | Loss: 664.4467 | Acc_tr: 0.839 | Acc_vd: 0.714 | ROC: 0.974 | F1: 0.118
+6688.90 | Epoch: 8/20 | Loss: 550.1373 | Acc_tr: 0.870 | Acc_vd: 0.769 | ROC: 0.979 | F1: 0.143
+6699.17 | Epoch: 9/20 | Loss: 450.7765 | Acc_tr: 0.895 | Acc_vd: 0.820 | ROC: 0.985 | F1: 0.175
+6611.89 | Epoch: 10/20 | Loss: 400.1114 | Acc_tr: 0.912 | Acc_vd: 0.856 | ROC: 0.979 | F1: 0.206
+6600.80 | Epoch: 11/20 | Loss: 348.0917 | Acc_tr: 0.929 | Acc_vd: 0.842 | ROC: 0.985 | F1: 0.194
+6852.99 | Epoch: 12/20 | Loss: 300.4302 | Acc_tr: 0.935 | Acc_vd: 0.905 | ROC: 0.985 | F1: 0.283
+Early stopping | Best ROC: 0.9850
+Run summary:
+
+train_acc	0.93466
+train_loss	300.43018
+valid_F1Score	0.28286
+valid_acc	0.90546
+valid_roc	0.98457
+-------- Fold: 2 --------
+6827.55 | Epoch: 1/20 | Loss: 937.2845 | Acc_tr: 0.778 | Acc_vd: 0.589 | ROC: 0.982 | F1: 0.088
+6919.54 | Epoch: 2/20 | Loss: 898.1107 | Acc_tr: 0.778 | Acc_vd: 0.551 | ROC: 0.979 | F1: 0.081
+6862.77 | Epoch: 3/20 | Loss: 713.8368 | Acc_tr: 0.824 | Acc_vd: 0.726 | ROC: 0.983 | F1: 0.125
+6989.11 | Epoch: 4/20 | Loss: 592.4296 | Acc_tr: 0.859 | Acc_vd: 0.880 | ROC: 0.983 | F1: 0.240
+6872.42 | Epoch: 5/20 | Loss: 518.6762 | Acc_tr: 0.879 | Acc_vd: 0.772 | ROC: 0.984 | F1: 0.147
+6849.95 | Epoch: 6/20 | Loss: 423.0631 | Acc_tr: 0.903 | Acc_vd: 0.778 | ROC: 0.984 | F1: 0.150
+6833.83 | Epoch: 7/20 | Loss: 380.0923 | Acc_tr: 0.916 | Acc_vd: 0.904 | ROC: 0.987 | F1: 0.285
+6963.03 | Epoch: 8/20 | Loss: 315.5420 | Acc_tr: 0.930 | Acc_vd: 0.875 | ROC: 0.985 | F1: 0.237
+7020.81 | Epoch: 9/20 | Loss: 249.9576 | Acc_tr: 0.946 | Acc_vd: 0.897 | ROC: 0.987 | F1: 0.274
+7267.26 | Epoch: 10/20 | Loss: 240.1847 | Acc_tr: 0.953 | Acc_vd: 0.928 | ROC: 0.985 | F1: 0.342
+7176.59 | Epoch: 11/20 | Loss: 208.5073 | Acc_tr: 0.962 | Acc_vd: 0.930 | ROC: 0.983 | F1: 0.347
+7688.73 | Epoch: 12/20 | Loss: 201.7046 | Acc_tr: 0.963 | Acc_vd: 0.933 | ROC: 0.986 | F1: 0.358
+Early stopping | Best ROC: 0.9867
+Run summary:
+
+train_acc	0.9632
+train_loss	201.70462
+valid_F1Score	0.35804
+valid_acc	0.93255
+valid_roc	0.98612
+-------- Fold: 3 --------
