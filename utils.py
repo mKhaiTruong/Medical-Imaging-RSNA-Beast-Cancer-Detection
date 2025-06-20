@@ -274,9 +274,9 @@ def transforms(isTrain=False, isMinority=False):
 # ==================================== RESNET50 ===========================================
 class ResNet50Network(nn.Module):
     
-    def __init__(self, outSize, no_columns):
+    def __init__(self, outputSize, no_columns):
         super().__init__()
-        self.no_columns, self.outSize = no_columns, outSize
+        self.no_columns, self.outputSize = no_columns, outputSize
         
         backbone = resnet50(weights=ResNet50_Weights.DEFAULT)
         
@@ -295,7 +295,7 @@ class ResNet50Network(nn.Module):
         )
         
         # Classification
-        self.classification = nn.Linear(2048 + 500, self.outSize)
+        self.classification = nn.Linear(2048 + 500, self.outputSize)
     
     def forward(self, image, meta, prints=False):
         if prints: 
