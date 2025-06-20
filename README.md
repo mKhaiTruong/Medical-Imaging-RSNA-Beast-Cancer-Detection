@@ -33,7 +33,7 @@ Includes mammography images in `.dcm` (DICOM) and `.jp2` (JPEG2000) formats.
 ## 📊 Evaluation Metric
 
 - **ROC AUC Score** was used to evaluate model performance, measuring the ability to distinguish between cancerous and non-cancerous images.
-
+- **F1 Score**: Balances precision (how many predicted positives are actually positive) and recall (how many actual positives are correctly identified).
 ---
 
 ## ⭐ Future Work
@@ -60,6 +60,8 @@ Includes mammography images in `.dcm` (DICOM) and `.jp2` (JPEG2000) formats.
 ---
 
 ## 🚧 Here lies updated codes
+- Update: Restnet and other models now share the same attributes
+- Update: in 3_1, correctly use topModel in objective function + correctly define ensembling voting
 
 1. V1:
 - lower augmentations' intensity. Some strong augmentations can lead to bad predictions.
